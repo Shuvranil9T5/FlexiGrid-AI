@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+dist/
+.DS_Store
+backend/flexigrid.db
+backend/app/ml/*.pkl
+
