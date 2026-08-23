@@ -1,4 +1,5 @@
 from io import BytesIO
+import os
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -14,9 +15,19 @@ from app.services.event_detection import detect_events, discover_patterns
 from app.services.preprocessing import prepare_readings, readings_to_frame, serialise_frame
 
 app = FastAPI(title="FlexiGrid AI API", version="1.0.0")
+
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
