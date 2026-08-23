@@ -10,6 +10,8 @@ services:
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
       - key: ALLOWED_ORIGINS
         value: https://flexigrid-ai-shuvranil9t5.onrender.com
 
