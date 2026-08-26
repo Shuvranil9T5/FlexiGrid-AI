@@ -1,0 +1,2 @@
+import {signedNumber} from "../utils/formatNumber";
+export default function BeforeAfterTable({result}) {const rows=[["Peak demand (kW)","peak_kw"],["Cost units","energy_cost_units"],["Solar used (kWh)","solar_used_kwh"]];return <table><thead><tr><th>Metric</th><th>Before</th><th>After</th><th>Difference</th></tr></thead><tbody>{rows.map(([label,key])=><tr key={key}><td>{label}</td><td>{result.before[key]}</td><td>{result.after[key]}</td><td>{signedNumber(result.differences[key],3)}</td></tr>)}</tbody></table>}

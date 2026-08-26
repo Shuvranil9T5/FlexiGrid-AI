@@ -1,0 +1,1 @@
+export default function RecommendationCard({item,mode}) {return <article className="card explanation"><div><span className="tag">{mode}</span><h3>{item.label}</h3><p>{item.explanation}</p><div className="chips">{item.constraints_respected.map(value=><span key={value}>✓ {value}</span>)}</div></div><b>{item.original_time} → {item.recommended_time}</b></article>}
