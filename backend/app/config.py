@@ -18,7 +18,7 @@ def get_allowed_origins() -> tuple[str, ...]:
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "FlexiGrid AI API"
-    app_version: str = "1.5.0"
+    app_version: str = "2.0.0"
 
     database_path: str = os.getenv(
         "FLEXIGRID_DB",

@@ -10,7 +10,8 @@ class EnergyReading(BaseModel):
 
 class AnalysisRequest(BaseModel):
     readings: list[EnergyReading]
-    event_threshold_kw: float = Field(default=0.8, gt=0)
+    event_threshold_kw: float | None = Field(default=None, gt=0)
+    detection_sensitivity: float = Field(default=1.0, ge=0.5, le=2.0)
 
 class EventDetectionRequest(AnalysisRequest):
     pass
@@ -31,6 +32,12 @@ class FlexibilityPassport(BaseModel):
     notes: str = ""
     verified: bool = False
     status: str = Field(default="candidate", pattern="^(candidate|confirmed|rejected)$")
+    power_min_kw: float | None = Field(default=None, ge=0)
+    power_max_kw: float | None = Field(default=None, ge=0)
+    duration_min_minutes: int | None = Field(default=None, ge=15)
+    duration_max_minutes: int | None = Field(default=None, ge=15)
+    start_uncertainty_minutes: int = Field(default=15, ge=0)
+    evidence_days: int = Field(default=1, ge=1)
 
 
 class ForecastRequest(BaseModel):
@@ -44,6 +51,9 @@ class OptimizationRequest(BaseModel):
     passports: list[FlexibilityPassport]
     max_building_kw: float = Field(default=20.0, gt=0)
     mode: str = Field(default="balanced", pattern="^(balanced|cost|peak|carbon)$")
+    forecast_lower_kw: list[float] | None = Field(default=None, min_length=96, max_length=96)
+    forecast_upper_kw: list[float] | None = Field(default=None, min_length=96, max_length=96)
+    include_scenarios: bool = True
 
 
 class OptimizationReportRequest(BaseModel):

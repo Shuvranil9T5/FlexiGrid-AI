@@ -476,7 +476,7 @@ tbody tr:hover {
 .passport {
   position: relative;
   display: grid;
-  grid-template-columns: 1.15fr 1.7fr repeat(5, minmax(98px, 1fr));
+  grid-template-columns: 1.15fr 1.7fr repeat(6, minmax(98px, 1fr));
   gap: 12px;
   align-items: end;
   margin-top: 10px;
@@ -676,6 +676,25 @@ tbody tr:hover {
   background: linear-gradient(90deg, #21c88f, #42dfae);
 }
 
+.processing { color: #a7f3d8; font-size: 0.8rem; font-weight: 650; }
+.helper { margin-top: 14px; padding: 10px 12px; border: 1px solid rgba(99,167,255,.16); border-radius: 8px; background: rgba(99,167,255,.06); font-size: .76rem; }
+.tariff-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.tariff-grid label { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: rgba(7,16,29,.52); font-size: .78rem; font-weight: 700; }
+.tariff-grid label span { display: flex; flex-direction: column; gap: 4px; }
+.tariff-grid small { font-size: .65rem; font-weight: 500; }
+.tariff-grid input { width: 92px; text-align: right; }
+.alert-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.fault-alert { display: flex; gap: 13px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(7,16,29,.52); }
+.fault-alert > span { height: max-content; padding: 4px 7px; border-radius: 999px; font-size: .61rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.fault-alert h3 { margin: 1px 0 5px; }
+.fault-alert p { font-size: .75rem; }
+.fault-alert.high { border-color: rgba(251,113,133,.3); }
+.fault-alert.high > span { color: #fecdd3; background: rgba(190,24,93,.45); }
+.fault-alert.medium { border-color: rgba(244,200,106,.28); }
+.fault-alert.medium > span { color: #fde6ad; background: rgba(146,91,16,.4); }
+.fault-alert.low > span { color: #bfdbfe; background: rgba(37,99,235,.35); }
+.fault-alert.info > span { color: #a7f3d8; background: rgba(6,95,70,.4); }
+
 @media (max-width: 1100px) {
   .passport {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -721,6 +740,11 @@ tbody tr:hover {
   }
 
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tariff-grid,
+  .alert-grid {
     grid-template-columns: 1fr;
   }
 

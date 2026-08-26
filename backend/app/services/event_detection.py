@@ -1,9 +1,23 @@
-import pandas as pd
 import numpy as np
-from sklearn.cluster import DBSCAN
+import pandas as pd
+
+from app.services.clustering import cluster_start_events
 
 
-def _duration_for_start(start: dict, events: list[dict]) -> int | None:
+def adaptive_thresholds(frame: pd.DataFrame, minimum_kw: float = 0.35, sensitivity: float = 1.0) -> pd.Series:
+    """Return a robust local threshold from the median absolute deviation of load changes."""
+    changes = frame["load_change"].abs()
+    rolling_median = changes.rolling(24, min_periods=8).median()
+    deviation = (changes - rolling_median).abs()
+    rolling_mad = deviation.rolling(24, min_periods=8).median()
+    global_median = float(changes.median())
+    global_mad = float((changes - global_median).abs().median())
+    rolling_median = rolling_median.fillna(global_median)
+    rolling_mad = rolling_mad.fillna(max(global_mad, 0.05))
+    return (rolling_median + (4.5 / sensitivity) * 1.4826 * rolling_mad).clip(lower=minimum_kw)
+
+
+def _match_duration(start: dict, events: list[dict]) -> int | None:
     start_time = pd.Timestamp(start["timestamp"])
     for stop in events:
         if stop["event_type"] != "STOP":
@@ -15,53 +29,58 @@ def _duration_for_start(start: dict, events: list[dict]) -> int | None:
     return None
 
 
-def detect_events(frame: pd.DataFrame, threshold_kw: float = 0.8) -> list[dict]:
-    candidates = frame[frame["load_change"].abs() >= threshold_kw]
+def detect_events(frame: pd.DataFrame, threshold_kw: float | None = None, sensitivity: float = 1.0) -> list[dict]:
+    thresholds = pd.Series(float(threshold_kw), index=frame.index) if threshold_kw else adaptive_thresholds(frame, sensitivity=sensitivity)
+    candidates = frame[frame["load_change"].abs() >= thresholds]
     events = []
     for timestamp, row in candidates.iterrows():
+        threshold = float(thresholds.loc[timestamp])
+        magnitude = abs(float(row["load_change"]))
+        signal_ratio = magnitude / max(threshold, 0.01)
         events.append({
             "timestamp": timestamp.isoformat(),
             "slot": int(row["slot"]),
             "change_kw": round(float(row["load_change"]), 3),
             "event_type": "START" if row["load_change"] > 0 else "STOP",
-            "confidence": round(min(0.99, 0.55 + abs(float(row["load_change"])) / 10), 2),
+            "confidence": round(min(0.99, 0.48 + 0.18 * signal_ratio), 2),
+            "threshold_kw": round(threshold, 3),
+            "threshold_mode": "manual" if threshold_kw else "adaptive MAD",
+            "signal_to_threshold": round(signal_ratio, 2),
         })
     return events
 
 
 def discover_patterns(events: list[dict]) -> list[dict]:
-    starts = [event for event in events if event["event_type"] == "START"]
-    if len(starts) < 2:
-        return []
-    powers = np.asarray([event["change_kw"] for event in starts], dtype=float)
-    slots = np.asarray([event["slot"] for event in starts], dtype=float)
-    scale = max(float(np.median(powers)), 0.5)
-    features = np.column_stack([np.sin(2 * np.pi * slots / 96), np.cos(2 * np.pi * slots / 96), powers / scale])
-    labels = DBSCAN(eps=0.55, min_samples=2).fit_predict(features)
-    grouped: dict[int, list[dict]] = {}
-    for label, event in zip(labels, starts):
-        if label >= 0:
-            grouped.setdefault(int(label), []).append(event)
+    grouped = cluster_start_events([event for event in events if event["event_type"] == "START"])
     patterns = []
     for label, items in grouped.items():
-        if len(items) >= 2:
-            bucket = int(round(float(np.median([item["slot"] for item in items])))) % 96
-            confidence = min(0.95, 0.5 + 0.06 * len(items) + 0.2 / (1 + float(np.std([item["slot"] for item in items]))))
-            durations = [value for item in items if (value := _duration_for_start(item, events)) is not None]
-            duration_slots = int(round(float(np.median(durations)))) if durations else 4
-            estimated_power = round(sum(item["change_kw"] for item in items) / len(items), 2)
-            patterns.append({
-                "pattern_id": f"PAT-{label + 1:02d}",
-                "typical_start_slot": bucket,
-                "occurrences": len(items),
-                "estimated_power_kw": estimated_power,
-                "duration_slots": duration_slots,
-                "duration_minutes": duration_slots * 15,
-                "estimated_energy_kwh": round(estimated_power * duration_slots * 0.25, 2),
-                "duration_observations": len(durations),
-                "label": "Candidate recurring flexible-load event",
-                "confidence": round(confidence, 2),
-                "verification_status": "candidate",
-                "method": "DBSCAN clustering of time-of-day and load-change magnitude",
-            })
+        slots = np.asarray([item["slot"] for item in items], dtype=float)
+        powers = np.asarray([item["change_kw"] for item in items], dtype=float)
+        durations = [value for item in items if (value := _match_duration(item, events)) is not None]
+        duration_slots = int(round(float(np.median(durations)))) if durations else 4
+        duration_spread = float(np.std(durations)) if durations else 1.0
+        slot_spread = float(np.std(slots))
+        power_mean, power_std = float(np.mean(powers)), float(np.std(powers))
+        evidence_days = len({pd.Timestamp(item["timestamp"]).date() for item in items})
+        confidence = min(0.97, 0.48 + 0.055 * len(items) + 0.18 / (1 + slot_spread) + 0.12 / (1 + power_std))
+        patterns.append({
+            "pattern_id": f"PAT-{label + 1:02d}",
+            "typical_start_slot": int(round(float(np.median(slots)))) % 96,
+            "occurrences": len(items),
+            "evidence_days": evidence_days,
+            "estimated_power_kw": round(power_mean, 2),
+            "power_min_kw": round(max(0, power_mean - 1.96 * power_std), 2),
+            "power_max_kw": round(power_mean + 1.96 * power_std, 2),
+            "duration_slots": max(1, duration_slots),
+            "duration_minutes": max(1, duration_slots) * 15,
+            "duration_min_minutes": max(15, int(round((duration_slots - 1.96 * duration_spread) * 15))),
+            "duration_max_minutes": max(15, int(round((duration_slots + 1.96 * duration_spread) * 15))),
+            "start_uncertainty_minutes": max(15, int(round(slot_spread * 15))),
+            "estimated_energy_kwh": round(power_mean * max(1, duration_slots) * 0.25, 2),
+            "duration_observations": len(durations),
+            "label": "Candidate recurring flexible-load event",
+            "confidence": round(confidence, 2),
+            "verification_status": "candidate",
+            "method": "Adaptive MAD detection + DBSCAN recurrence clustering",
+        })
     return sorted(patterns, key=lambda item: item["typical_start_slot"])
