@@ -1,29 +1,107 @@
 import json
-import os
 import sqlite3
 from datetime import datetime, timezone
 
-DB_PATH = os.getenv("FLEXIGRID_DB", os.path.join(os.path.dirname(__file__), "flexigrid.db"))
+from app.config import settings
+from app.models import SCHEMA_STATEMENTS
+
+
+DB_PATH = settings.database_path
+
 
 def connect():
-    db = sqlite3.connect(DB_PATH)
-    db.row_factory = sqlite3.Row
-    return db
+    database = sqlite3.connect(DB_PATH)
+    database.row_factory = sqlite3.Row
+    return database
+
 
 def init_db():
-    with connect() as db:
-        db.execute("CREATE TABLE IF NOT EXISTS passports (pattern_id TEXT PRIMARY KEY, status TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL)")
-        db.execute("CREATE TABLE IF NOT EXISTS optimization_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, mode TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL)")
+    with connect() as database:
+        for statement in SCHEMA_STATEMENTS:
+            database.execute(statement)
+
 
 def save_passport_record(payload: dict):
-    now = datetime.now(timezone.utc).isoformat()
-    with connect() as db:
-        db.execute("INSERT INTO passports(pattern_id,status,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(pattern_id) DO UPDATE SET status=excluded.status,payload=excluded.payload,updated_at=excluded.updated_at", (payload["pattern_id"], payload["status"], json.dumps(payload), now))
+    init_db()
+    current_time = datetime.now(timezone.utc).isoformat()
+
+    with connect() as database:
+        database.execute(
+            """
+            INSERT INTO passports (
+                pattern_id,
+                status,
+                payload,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(pattern_id)
+            DO UPDATE SET
+                status = excluded.status,
+                payload = excluded.payload,
+                updated_at = excluded.updated_at
+            """,
+            (
+                payload["pattern_id"],
+                payload["status"],
+                json.dumps(payload),
+                current_time,
+            ),
+        )
+
 
 def list_saved_passports():
-    with connect() as db:
-        return [json.loads(row["payload"]) for row in db.execute("SELECT payload FROM passports ORDER BY updated_at DESC")]
+    init_db()
+
+    with connect() as database:
+        rows = database.execute(
+            """
+            SELECT payload
+            FROM passports
+            ORDER BY updated_at DESC
+            """
+        )
+
+        return [json.loads(row["payload"]) for row in rows]
+
 
 def save_run(mode: str, result: dict):
-    with connect() as db:
-        db.execute("INSERT INTO optimization_runs(mode,result,created_at) VALUES(?,?,?)", (mode, json.dumps(result), datetime.now(timezone.utc).isoformat()))
+    init_db()
+
+    with connect() as database:
+        database.execute(
+            """
+            INSERT INTO optimization_runs (
+                mode,
+                result,
+                created_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                mode,
+                json.dumps(result),
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+
+
+def save_analysis(source_label: str, summary: dict):
+    init_db()
+
+    with connect() as database:
+        database.execute(
+            """
+            INSERT INTO analysis_runs (
+                source_label,
+                summary,
+                created_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                source_label,
+                json.dumps(summary),
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )

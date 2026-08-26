@@ -12,6 +12,8 @@ class AnalysisRequest(BaseModel):
     readings: list[EnergyReading]
     event_threshold_kw: float = Field(default=0.8, gt=0)
 
+class EventDetectionRequest(AnalysisRequest):
+    pass
 
 class FlexibilityPassport(BaseModel):
     pattern_id: str
