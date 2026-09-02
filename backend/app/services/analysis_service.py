@@ -14,12 +14,13 @@ def analyse_readings(
     threshold: float | None,
     source_label: str = "uploaded/measured as supplied",
     sensitivity: float = 1.0,
+    forecast_models: list[str] | None = None,
 ) -> dict:
     frame, quality = prepare_readings(readings)
 
     events = detect_events(frame, threshold, sensitivity)
     patterns = discover_patterns(events)
-    forecast = forecast_with_evaluation(frame)
+    forecast = forecast_with_evaluation(frame, forecast_models)
     faults = detect_faults(frame, events, patterns)
 
     result = {
@@ -34,6 +35,7 @@ def analyse_readings(
         "forecast_interval_confidence": forecast["interval_confidence"],
         "forecast_evaluation": forecast["evaluation"],
         "forecast_model": forecast["model"],
+        "model_capabilities": forecast["model_capabilities"],
         "data_quality": quality,
         "source_label": source_label,
         "solar_kw": solar_profile(),

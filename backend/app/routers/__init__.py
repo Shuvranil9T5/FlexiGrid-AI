@@ -1,4 +1,5 @@
 from app.routers import (
+    datasets,
     events,
     forecasts,
     optimization,
@@ -9,6 +10,7 @@ from app.routers import (
 
 
 ALL_ROUTERS = (
+    datasets.router,
     upload.router,
     events.router,
     passports.router,
