@@ -1,0 +1,4 @@
+  # Install after requirements.txt when training or serving TFT locally.
+torch>=2.2,<3
+lightning>=2.2,<3
+pytorch-forecasting>=1.0,<2

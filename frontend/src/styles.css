@@ -39,8 +39,16 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 90% -10%, rgba(40, 212, 156, 0.13), transparent 31rem),
-    radial-gradient(circle at -10% 32%, rgba(59, 130, 246, 0.09), transparent 28rem),
+    radial-gradient(
+      circle at 90% -10%,
+      rgba(40, 212, 156, 0.13),
+      transparent 31rem
+    ),
+    radial-gradient(
+      circle at -10% 32%,
+      rgba(59, 130, 246, 0.09),
+      transparent 28rem
+    ),
     linear-gradient(180deg, #081321 0%, #07101d 52%, #060d18 100%);
 }
 
@@ -53,7 +61,11 @@ body::before {
   opacity: 0.16;
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+    linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.035) 1px,
+      transparent 1px
+    );
   background-size: 32px 32px;
   mask-image: linear-gradient(to bottom, black, transparent 76%);
 }
@@ -68,8 +80,12 @@ button,
 .upload,
 select,
 input {
-  transition: border-color 160ms ease, background 160ms ease, color 160ms ease,
-    box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 main {
@@ -95,7 +111,12 @@ header::after {
   left: 0;
   height: 1px;
   content: "";
-  background: linear-gradient(90deg, var(--brand), rgba(99, 167, 255, 0.28), transparent 84%);
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    rgba(99, 167, 255, 0.28),
+    transparent 84%
+  );
   opacity: 0.55;
 }
 
@@ -173,7 +194,11 @@ header p:not(.eyebrow) {
   border: 1px solid var(--border);
   border-radius: 14px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.018), transparent 42%),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.018),
+      transparent 42%
+    ),
     rgba(12, 23, 39, 0.94);
   box-shadow: var(--shadow-sm), var(--shadow-lg);
   backdrop-filter: blur(16px);
@@ -259,6 +284,18 @@ button.secondary:hover {
   box-shadow: 0 9px 24px rgba(37, 99, 235, 0.24);
 }
 
+/* UCI and I-BLEND dataset buttons */
+button.dataset {
+  color: #dbeafe;
+  border-color: rgba(99, 167, 255, 0.24);
+  background: rgba(37, 99, 235, 0.58);
+  box-shadow: none;
+}
+
+button.dataset:hover {
+  background: rgba(37, 99, 235, 0.76);
+}
+
 .upload input {
   display: none;
 }
@@ -305,6 +342,25 @@ input:hover {
   color: #f8dda1;
   background: rgba(146, 91, 16, 0.12);
   font-size: 0.8rem;
+}
+
+/* LightGBM and TFT setup messages */
+.model-note {
+  margin-top: 9px;
+  padding: 8px 10px;
+  border: 1px solid rgba(244, 200, 106, 0.18);
+  border-radius: 7px;
+  color: #d9c48e;
+  background: rgba(146, 91, 16, 0.08);
+  font-size: 0.72rem;
+}
+
+.row b.ready {
+  color: #86efc5;
+}
+
+.row b.pending {
+  color: #f4c86a;
 }
 
 .metrics {
@@ -484,7 +540,10 @@ tbody tr:hover {
   border: 1px solid var(--border);
   border-radius: 11px;
   background: rgba(7, 16, 29, 0.52);
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
 .passport:hover {
@@ -529,7 +588,11 @@ tbody tr:hover {
 
 .passport.confirmed {
   border-color: rgba(40, 212, 156, 0.35);
-  background: linear-gradient(90deg, rgba(40, 212, 156, 0.075), rgba(7, 16, 29, 0.52) 35%);
+  background: linear-gradient(
+    90deg,
+    rgba(40, 212, 156, 0.075),
+    rgba(7, 16, 29, 0.52) 35%
+  );
   box-shadow: inset 3px 0 0 var(--brand);
 }
 
@@ -641,13 +704,12 @@ tbody tr:hover {
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(22, 38, 59, 0.94) 0,
-      rgba(22, 38, 59, 0.94) calc(25% - 1px),
-      rgba(113, 128, 150, 0.22) 25%
-    );
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(22, 38, 59, 0.94) 0,
+    rgba(22, 38, 59, 0.94) calc(25% - 1px),
+    rgba(113, 128, 150, 0.22) 25%
+  );
 }
 
 .bar {
@@ -727,6 +789,7 @@ tbody tr:hover {
   .actions {
     position: static;
     align-items: stretch;
+    flex-wrap: wrap;
   }
 
   .actions button,
@@ -779,6 +842,10 @@ tbody tr:hover {
 }
 
 @media (max-width: 480px) {
+  main {
+    width: min(100% - 20px, 1240px);
+  }
+
   .metrics,
   .passport {
     grid-template-columns: 1fr;
