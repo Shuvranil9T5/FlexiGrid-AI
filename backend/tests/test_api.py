@@ -32,8 +32,30 @@ def test_optimizer_with_no_passports_keeps_baseline():
 
 def test_demo_compares_forecast_models_and_infers_duration():
     data = client.get("/api/demo").json()
-    assert {"Seasonal baseline", "Random Forest"} == set(data["forecast_evaluation"]["models"])
+    assert {"Seasonal baseline", "Random Forest", "LightGBM"} == set(data["forecast_evaluation"]["models"])
+    assert data["model_capabilities"]["LightGBM"]["available"] is True
     assert all(pattern["duration_slots"] >= 1 for pattern in data["patterns"])
+
+
+def test_passport_workflow_uses_numeric_pattern_order():
+    passports = client.get("/api/demo").json()["candidate_passports"]
+    identifiers = [passport["pattern_id"] for passport in passports]
+    assert identifiers == sorted(identifiers, key=lambda value: int(value.split("-")[-1]))
+
+
+def test_real_dataset_catalog_has_uci_and_iblend_samples():
+    response = client.get("/api/datasets")
+    assert response.status_code == 200
+    datasets = {item["id"]: item for item in response.json()["datasets"]}
+    assert set(datasets) == {"uci", "iblend"}
+    assert datasets["uci"]["native_resolution"] == "15 minutes"
+    assert datasets["iblend"]["sample_available"] is True
+
+
+def test_model_status_distinguishes_advanced_models():
+    models = client.get("/api/models/status").json()["models"]
+    assert models["LightGBM"]["type"] == "advanced gradient boosting"
+    assert models["TFT"]["type"] == "advanced deep learning"
 
 
 def test_report_download_is_pdf():

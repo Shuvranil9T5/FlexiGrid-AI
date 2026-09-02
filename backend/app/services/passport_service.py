@@ -22,7 +22,10 @@ def build_candidate_passports(patterns: list[dict]) -> list[dict]:
             passport.update(saved[pattern["pattern_id"]])
             passport.update({key: pattern[key] for key in ("occurrences", "confidence", "duration_observations")})
         candidates.append(passport)
-    return candidates
+    # DBSCAN cluster labels are not chronological, while pattern IDs are the
+    # workflow's user-facing sequence. Keep persisted IDs stable and present
+    # the cards in their natural PAT-01, PAT-02, ... order.
+    return sorted(candidates, key=lambda item: int(item["pattern_id"].split("-")[-1]))
 
 
 def store_passport(payload: dict) -> dict:
